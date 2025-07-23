@@ -18,19 +18,8 @@ def make_minari_inputs(dataset_id: str, modelled_terminals: bool = False, downlo
     """Create inputs from Minari dataset"""
     print(f"Loading Minari dataset: {dataset_id}")
     
-    try:
-        dataset = minari.load_dataset(dataset_id)
-    except Exception as e:
-        if download:
-            print(f"Dataset {dataset_id} not found locally. Downloading...")
-            try:
-                minari.download_dataset(dataset_id)
-                dataset = minari.load_dataset(dataset_id)
-                print(f"Successfully downloaded and loaded {dataset_id}")
-            except Exception as download_error:
-                raise Exception(f"Failed to download dataset {dataset_id}: {download_error}")
-        else:
-            raise Exception(f"Dataset {dataset_id} not found locally and download=False: {e}")
+    dataset = minari.load_dataset(dataset_id, download=download)
+    print(f"Successfully loaded {dataset_id}")
     
     # Extract data from episodes
     all_observations = []
@@ -61,7 +50,7 @@ def make_minari_inputs(dataset_id: str, modelled_terminals: bool = False, downlo
     
     print(f"Loaded {len(observations)} transitions from Minari dataset")
     
-    # Create inputs in the same format as minari
+    # Create inputs in the same format as original
     inputs = np.concatenate([observations, actions, rewards[:, None], next_observations], axis=1)
     if modelled_terminals:
         inputs = np.concatenate([inputs, terminals[:, None]], axis=1)
@@ -130,8 +119,8 @@ class SimpleDiffusionGenerator:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='halfcheetah-medium-replay-v2', 
-                        help='Minari dataset ID to load. Use minari.download_dataset(id) if not available locally.')
+    parser.add_argument('--dataset', type=str, default='D4RL/pen/human-v2', 
+                        help='Minari dataset ID to load.')
     parser.add_argument('--gin_config_files', nargs='*', type=str, default=['config/resmlp_denoiser.gin'])
     parser.add_argument('--gin_params', nargs='*', type=str, default=[])
     # wandb config
@@ -192,6 +181,10 @@ if __name__ == '__main__':
 
     # Generate samples and save them.
     if args.save_samples:
+        # We need to recover the environment from the dataset to get the env for the generator
+        minari_dataset = minari.load_dataset(args.dataset)
+        env = minari_dataset.recover_environment()
+        
         generator = SimpleDiffusionGenerator(
             env=env,
             ema_model=trainer.ema.ema_model,
