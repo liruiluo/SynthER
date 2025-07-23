@@ -39,6 +39,7 @@ dependencies = [
     "torch",
     "torchdiffeq",
     "gymnasium",
+    "gym",
     "tqdm",
     "wandb",
     "sortedcontainers",
@@ -83,7 +84,7 @@ Documentation = "https://github.com/conglu1997/SynthER#readme"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = [".", "src"]
+where = [".", "src/redq"]
 include = ["synther*", "redq*"]
 
 
