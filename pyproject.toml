@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synther"
+version = "0.1.0"
+description = "Synthetic Experience Replay (SynthER) - A diffusion-based approach for RL experience upsampling"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Cong Lu", email = "conglu97@outlook.com"},
+    {name = "Philip J. Ball", email = "ball@robots.ox.ac.uk"}
+]
+maintainers = [
+    {name = "Cong Lu", email = "conglu97@outlook.com"},
+    {name = "Philip J. Ball", email = "ball@robots.ox.ac.uk"}
+]
+keywords = ["reinforcement learning", "diffusion models", "experience replay", "machine learning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "accelerate",
+    "einops",
+    "ema-pytorch",
+    "numpy",
+    "pillow",
+    "pytorch-fid",
+    "torch",
+    "torchdiffeq",
+    "gymnasium",
+    "tqdm",
+    "wandb",
+    "sortedcontainers",
+    "pyrallis",
+    "gin-config",
+    "h5py",
+    "redq",
+    "minari>=0.5.3",
+    "mujoco>=3.0",
+]
+
+[project.optional-dependencies]
+mujoco = [
+    "mujoco>=3.0.0",
+    "mujoco-py==2.1.2.14",
+]
+dm-control = [
+    "dm-control",
+    "dm-env", 
+    "dm-tree",
+    "dmcgym @ git+https://github.com/conglu1997/dmcgym.git@812905790dd87a448c9544a0beccb8b05ea2a850",
+]
+d4rl = [
+    "d4rl @ git+https://github.com/Farama-Foundation/d4rl@master#egg=d4rl",
+]
+all = [
+    "synther[mujoco,dm-control,d4rl]"
+]
+
+[project.urls]
+Homepage = "https://github.com/conglu1997/SynthER"
+Repository = "https://github.com/conglu1997/SynthER"
+Documentation = "https://github.com/conglu1997/SynthER#readme"
+"Bug Tracker" = "https://github.com/conglu1997/SynthER/issues"
+"Paper" = "https://arxiv.org/abs/2303.06614"
+
+# Scripts can be run directly as:
+# uv run python synther/diffusion/train_diffuser.py
+# uv run python synther/online/online_exp.py
+# etc.
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["synther*"]
+exclude = ["tests*", "src*"]
+
+[tool.setuptools.package-data]
+synther = ["**/*.gin", "**/*.yaml", "**/*.yml"]
+
+[tool.uv.sources]
+redq = { path = "src/redq", editable = true }

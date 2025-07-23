@@ -1,7 +1,6 @@
 # Utilities for diffusion.
 from typing import Optional, List, Union
 
-import d4rl
 import gin
 import gym
 import numpy as np
@@ -20,6 +19,8 @@ def make_inputs(
         env: gym.Env,
         modelled_terminals: bool = False,
 ) -> np.ndarray:
+    # This function requires d4rl to be installed
+    import d4rl
     dataset = d4rl.qlearning_dataset(env)
     obs = dataset['observations']
     actions = dataset['actions']

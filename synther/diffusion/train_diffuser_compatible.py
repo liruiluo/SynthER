@@ -8,10 +8,66 @@ import gymnasium as gym
 import numpy as np
 import torch
 import wandb
+import minari
 
 from synther.diffusion.elucidated_diffusion import Trainer
 from synther.diffusion.norm import MinMaxNormalizer
 from synther.diffusion.utils import make_inputs, split_diffusion_samples, construct_diffusion_model
+
+
+def make_minari_inputs(dataset_id: str, modelled_terminals: bool = False, download: bool = True) -> np.ndarray:
+    """Create inputs from Minari dataset"""
+    print(f"Loading Minari dataset: {dataset_id}")
+    
+    try:
+        dataset = minari.load_dataset(dataset_id)
+    except Exception as e:
+        if download:
+            print(f"Dataset {dataset_id} not found locally. Downloading...")
+            try:
+                minari.download_dataset(dataset_id)
+                dataset = minari.load_dataset(dataset_id)
+                print(f"Successfully downloaded and loaded {dataset_id}")
+            except Exception as download_error:
+                raise Exception(f"Failed to download dataset {dataset_id}: {download_error}")
+        else:
+            raise Exception(f"Dataset {dataset_id} not found locally and download=False: {e}")
+    
+    # Extract data from episodes
+    all_observations = []
+    all_actions = []
+    all_rewards = []
+    all_next_observations = []
+    all_terminals = []
+    
+    for episode in dataset:
+        obs = episode.observations[:-1]  # All but last observation
+        next_obs = episode.observations[1:]  # All but first observation
+        actions = episode.actions
+        rewards = episode.rewards
+        terminals = episode.terminations
+        
+        all_observations.append(obs)
+        all_actions.append(actions)
+        all_rewards.append(rewards)
+        all_next_observations.append(next_obs)
+        all_terminals.append(terminals)
+    
+    # Concatenate all episodes
+    observations = np.concatenate(all_observations, axis=0)
+    actions = np.concatenate(all_actions, axis=0)
+    rewards = np.concatenate(all_rewards, axis=0)
+    next_observations = np.concatenate(all_next_observations, axis=0)
+    terminals = np.concatenate(all_terminals, axis=0)
+    
+    print(f"Loaded {len(observations)} transitions from Minari dataset")
+    
+    # Create inputs in the same format as d4rl
+    inputs = np.concatenate([observations, actions, rewards[:, None], next_observations], axis=1)
+    if modelled_terminals:
+        inputs = np.concatenate([inputs, terminals[:, None]], axis=1)
+    
+    return inputs.astype(np.float32)
 
 
 @gin.configurable
@@ -75,7 +131,8 @@ class SimpleDiffusionGenerator:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='halfcheetah-medium-replay-v2')
+    parser.add_argument('--dataset', type=str, default='halfcheetah-medium-replay-v2', 
+                        help='Minari dataset ID to load. Use minari.download_dataset(id) if not available locally.')
     parser.add_argument('--gin_config_files', nargs='*', type=str, default=['config/resmlp_denoiser.gin'])
     parser.add_argument('--gin_params', nargs='*', type=str, default=[])
     # wandb config
@@ -100,9 +157,8 @@ if __name__ == '__main__':
     if args.use_gpu:
         torch.cuda.manual_seed(args.seed)
 
-    # Create the environment and dataset.
-    env = gym.make(args.dataset)
-    inputs = make_inputs(env)
+    # Create the dataset using Minari.
+    inputs = make_minari_inputs(args.dataset)
     inputs = torch.from_numpy(inputs).float()
     dataset = torch.utils.data.TensorDataset(inputs)
 
