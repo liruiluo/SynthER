@@ -1,8 +1,7 @@
-# Train diffusion model on D4RL transitions.
+# Train diffusion model on Minari transitions.
 import argparse
 import pathlib
 
-# import d4rl
 import gin
 import gymnasium as gym
 import numpy as np
@@ -62,7 +61,7 @@ def make_minari_inputs(dataset_id: str, modelled_terminals: bool = False, downlo
     
     print(f"Loaded {len(observations)} transitions from Minari dataset")
     
-    # Create inputs in the same format as d4rl
+    # Create inputs in the same format as minari
     inputs = np.concatenate([observations, actions, rewards[:, None], next_observations], axis=1)
     if modelled_terminals:
         inputs = np.concatenate([inputs, terminals[:, None]], axis=1)
