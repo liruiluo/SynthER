@@ -45,7 +45,6 @@ dependencies = [
     "pyrallis",
     "gin-config",
     "h5py",
-    "redq",
     "minari>=0.5.3",
     "mujoco>=3.0",
 ]
@@ -84,12 +83,9 @@ Documentation = "https://github.com/conglu1997/SynthER#readme"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["synther*"]
-exclude = ["tests*", "src*"]
+where = [".", "src"]
+include = ["synther*", "redq*"]
+
 
 [tool.setuptools.package-data]
 synther = ["**/*.gin", "**/*.yaml", "**/*.yml"]
-
-[tool.uv.sources]
-redq = { path = "src/redq", editable = true }
